@@ -1,5 +1,10 @@
 # Getting Started
 
+### Running Maxonrow using docker
+This Maxonrow docker is useful for running maxonrow locally and testing purpose. It has some kyc accounts. Some fee settings are set and also maintenance group are defined. Download the dockerfile from here:
+
+* [Maxonrow docker](https://github.com/maxonrow/maxonrow-go/tree/develop/docker "Maxonrow docker") : Run a Maxonrow docker 
+
 ### Running Full node with Validator 
 `MAXONROW` blockchain can be run as a full node, syncing it's state with another node or validator.
 
@@ -24,7 +29,7 @@ mxwd start --home ~/.mxw_node4 --log_level info --p2p.seeds
 
 ```
 
-* [Testnets](https://github.com/githubckgoh1439/mxw-testnets "Maxonrow Testnets") : Run a Maxonrow Blockchain Full node 
+* [Testnets](https://github.com/githubckgoh1439/mxw-testnets "Maxonrow Testnets") : Run a Maxonrow Blockchain Locally
 
 
 #### Examples of Query Account

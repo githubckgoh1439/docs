@@ -2,11 +2,11 @@ site_name: Maxonrow Blockchain <br /> v1.0
 nav:
     - Introduction:
         - 'Overview': 'index.md'
-        - 'Installation': 'mxw-Installation.md'
+        - 'Compilation': 'mxw-Installation.md'
         - 'Quick Start': 'mxw-Quick-Start.md'
 
     - Modules:
-        - 'List of Modules': 'mxw-Modules.md'
+        - 'List of Modules': 'modules/mxw-Modules.md'
 
     - Interfaces:
         - 'Node CLI': 'mxw-Node-CLI.md'
@@ -14,7 +14,7 @@ nav:
 
     - Toolkits:
         - 'API reference SDK': 'mxw-SDKs.md'
-        - 'Block Explorer for Testnet': 'https://max-scan.usdp.io/'
+        - 'Block Explorer for Testnet': 'https:/    /max-scan.usdp.io/'
         - 'Faucet': 'mxw-faucet.md'
         #- 'Tutorials': 'mxw-Tutorials.md'
 

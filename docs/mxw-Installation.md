@@ -1,4 +1,4 @@
-# Installation
+# Compile The Source Code
 
 1. Install Go 1.12.5+ [official website](https://github.com/golang/go)
 

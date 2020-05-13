@@ -27,10 +27,8 @@ The features listed below are currently supported on Maxonrow Blockchain:
 ### Technology Details
 Continue reading below if you are interested:
 
-- [Maxonrow Blockchain as a Block Chain:](https://www.maxonrow.com/ "Maxonrow Blockchain as a Block Chain:") about consensus, software stack, network layout and roles.
-- [Connect to Maxonrow Blockchain:](https://www.maxonrow.com/ "Connect to Maxonrow Blockchain:") how to connect to Maxonrow Blockchain via different ways.
-- [Run a Maxonrow Blockchain Full node: ](https://github.com/maxonrow/mxw-launch "Run a Maxonrow Blockchain full node: ")how to run a full node and become part of the p2p network of Maxonrow Blockchain.
-
+- [Maxonrow Blockchain source code:](https://github.com/maxonrow/maxonrow-go "Maxonrow Blockchain source code:") Check the official github repository of Maxonrow blockchain and check more about consensus, software stack, network layout and roles.
+- [Connect to Maxonrow Testnet: ](https://github.com/maxonrow/mxw-launch "Connect to Maxonrow Testnet: ")how to run a node and become part of the p2p network of Maxonrow Test Net Blockchain.
 ### Acknowledgement
 Thanks to the [community, our partners and supporters](mxw-Acknowledgement.md "community, our partners and supporters").
 

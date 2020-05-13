@@ -208,8 +208,7 @@ The above command returns JSON structured like this:
   "id": 0,
   "result": {
     "response": {
-      "value": "eyJuYW1lIjoiZGVmYXVsdCIsIm1pbiI6W3siZGVub20iOiJjaW4iLCJhbW91bnQiOiIxMDAwMDAwMDAwMDAwMDAwMCJ9XSwibWF4IjpbeyJkZW5vbSI6ImNpbiIsImFtb3VudCI6IjEwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifV0sInBlcmNlbnRhZ2UiOiIwLjA1IiwiaXNzdWVyIjoibXh3MXVyYXp6NnZ1bGRqcDA5Z3R6ZnQwbncya3V2MjVsMDc5M2M2bTl3In0=",
-      "height": "2834"
+      "value": "W3siYW1vdW50IjoiMjAwMDAwMDAwIiwiZGVub20iOiJjaW4ifV0="
     }
   }
 }
