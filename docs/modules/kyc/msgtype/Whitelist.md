@@ -22,23 +22,23 @@ type Payload struct {
 
 | Name | Type | Required | Description                 |
 | ---- | ---- | -------- | --------------------------- |
-| owner | string | true   | Token owner| | 
-| kycData| KycData | true   | Data of KYC | | 
+| owner | string | true   | Token owner| |
+| kycData| KycData | true   | Data of KYC | |
 
 
 #### KycData Information
 | Name | Type | Required | Description                 |
 | ---- | ---- | -------- | --------------------------- |
-| payload | Payload | true   | Payload| | 
+| payload | Payload | true   | Payload| |
 | signatures | []Signature | true   | signatures | |
 
 
 #### Payload Information
 | Name | Type | Required | Description                 |
 | ---- | ---- | -------- | --------------------------- |
-| kyc | Kyc | true   | kyc data| | 
-| pub_key | crypto.PubKey | true   | pub_key| | 
-| signature | []byte | true   | signatures| | 
+| kyc | Kyc | true   | kyc data| |
+| pub_key | crypto.PubKey | true   | pub_key| |
+| signature | []byte | true   | signatures| |
 
 
 
@@ -85,7 +85,7 @@ type Payload struct {
 
 ## Handler
 
-The role of the handler is to define what action(s) needs to be taken when this MsgTypeBurnNonFungibleItem message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgTypeBurnNonFungibleItem` message is received.
 
 In the file (./x/token/fungible/handler.go) start with the following code:
 
@@ -93,21 +93,21 @@ In the file (./x/token/fungible/handler.go) start with the following code:
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
-Now, you need to define the actual logic for handling the MsgTypeBurnNonFungibleItem message in handleMsgBurnNonFungibleItem:
+Now, you need to define the actual logic for handling the MsgTypeBurnNonFungibleItem message in `handleMsgBurnNonFungibleItem`:
 
 ![Image-2](../pic/Whitelist_02.png)
 
 
-In this function, requirements need to be met before emitted by the network.  
+In this function, requirements need to be met before emitted by the network.
 
 * Authoriser, Issuer, provider must be authorised users.
-* User with valid account only can proceed for KYC process.  
+* User with valid account only can proceed for KYC process.
 
 
 ## Events
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](../pic/Whitelist_03.png)  
+![Image-1](../pic/Whitelist_03.png)
 
 
 #### Usage
@@ -115,11 +115,9 @@ This MakeMxwEvents create maxonrow events, by accepting :
 
 * Custom Event Signature : using KycWhitelisted(string,string)
 * Signer
-* Event Parameters as below: 
+* Event Parameters as below:
 
 | Name | Type | Description                 |
 | ---- | ---- | --------------------------- |
-| signer | string | Account address| | 
+| signer | string | Account address| |
 | account | string | Account address| |
-
-

@@ -26,27 +26,27 @@ The message type contains the following parameters:
 
 | Name | Type | Required | Description                 |
 | ---- | ---- | -------- | --------------------------- |
-| owner | string | true   | Account address| | 
-| payload | Payload | true   | Payload data| | 
-| signatures | []Signature | true   | Signature| | 
+| owner | string | true   | Account address| |
+| payload | Payload | true   | Payload data| |
+| signatures | []Signature | true   | Signature| |
 
 
 #### Payload Information
 | Name | Type | Required | Description                 |
 | ---- | ---- | -------- | --------------------------- |
-| alias | AliasData | true   | Fee-collector| | 
-| pub_key | string | true   | Fee amount to be paid| | 
-| signature | []byte | true   | Fee amount to be paid| | 
+| alias | AliasData | true   | Fee-collector| |
+| pub_key | string | true   | Fee amount to be paid| |
+| signature | []byte | true   | Fee amount to be paid| |
 
 
 
 #### AliasData Information
 | Name | Type | Required | Description                 |
 | ---- | ---- | -------- | --------------------------- |
-| from | string | true   | Fee-collector| | 
-| nonce | string | true   | nonce| | 
-| status | string | true   | status| | 
-| name | string | true   | name| | 
+| from | string | true   | Fee-collector| |
+| nonce | string | true   | nonce| |
+| status | string | true   | status| |
+| name | string | true   | name| |
 
 
 
@@ -85,7 +85,7 @@ The message type contains the following parameters:
 
 ## Handler
 
-The role of the handler is to define what action(s) needs to be taken when this MsgTypeSetNonFungibleTokenStatus message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgTypeSetNonFungibleTokenStatus` message is received.
 
 In the file (./x/nameservice/handler.go) start with the following code:
 
@@ -94,36 +94,36 @@ In the file (./x/nameservice/handler.go) start with the following code:
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 
-First, you define the actual logic for handling the MsgSetAliasStatus-ApproveAlias message in handleMsgSetAliasStatus:
+First, you define the actual logic for handling the MsgSetAliasStatus-ApproveAlias message in `handleMsgSetAliasStatus`:
 
 ![Image-2](../pic/SetAliasStatus_01.png)
 
 
-In this function, requirements need to be met before emitted by the network.  
+In this function, requirements need to be met before emitted by the network.
 
 * Alias must be valid.
 * Owner of Alias must have valid account.
 * Signer must be authorised in order to approve the alias proposal.
 
 
-Second, you define the actual logic for handling the MsgSetAliasStatus-RejectAlias message in handleMsgSetAliasStatus:
+Second, you define the actual logic for handling the MsgSetAliasStatus-RejectAlias message in `handleMsgSetAliasStatus`:
 
 ![Image-2](../pic/SetAliasStatus_02.png)
 
 
-In this function, requirements need to be met before emitted by the network.  
+In this function, requirements need to be met before emitted by the network.
 
 * Alias must be valid.
 * Owner of Alias must have valid account.
 * Signer must be authorised in order to reject the alias proposal.
 
 
-Lastly, you define the actual logic for handling the MsgSetAliasStatus-RevokeAlias message in handleMsgSetAliasStatus:
+Lastly, you define the actual logic for handling the MsgSetAliasStatus-RevokeAlias message in `handleMsgSetAliasStatus`:
 
 ![Image-2](../pic/SetAliasStatus_03.png)
 
 
-In this function, requirements need to be met before emitted by the network.  
+In this function, requirements need to be met before emitted by the network.
 
 * Alias must be valid.
 * Owner of Alias must have valid account.
@@ -133,7 +133,7 @@ In this function, requirements need to be met before emitted by the network.
 #### 1.
 This tutorial describes how to create maxonrow events for scanner base on Approve Alias after emitted by a network.
 
-![Image-1](../pic/SetAliasStatus_04.png)  
+![Image-1](../pic/SetAliasStatus_04.png)
 
 
 #### Usage
@@ -141,51 +141,48 @@ This MakeMxwEvents create maxonrow events, by accepting :
 
 * Custom Event Signature : using ApprovedAlias(string,string)
 * Signer
-* Event Parameters as below: 
+* Event Parameters as below:
 
 | Name | Type | Description                 |
 | ---- | ---- | --------------------------- |
-| alias | string | Alias value| | 
-| from | string | Account address| | 
+| alias | string | Alias value| |
+| from | string | Account address| |
 
 
 #### 2.
 This tutorial describes how to create maxonrow events for scanner base on Rejected Alias after emitted by a network.
 
-![Image-2](../pic/SetAliasStatus_05.png)  
+![Image-2](../pic/SetAliasStatus_05.png)
 
 
 #### Usage
 This MakeMxwEvents create maxonrow events, by accepting :
 
-* Custom Event Signature : using RejectedAlias(string,string) 
+* Custom Event Signature : using RejectedAlias(string,string)
 * Signer
-* Event Parameters as below: 
+* Event Parameters as below:
 
 | Name | Type | Description                 |
 | ---- | ---- | --------------------------- |
-| alias | string | Alias value| | 
-| from | string | Account address| | 
+| alias | string | Alias value| |
+| from | string | Account address| |
 
 
 
 #### 3.
 This tutorial describes how to create maxonrow events for scanner base on Revoke Alias after emitted by a network.
 
-![Image-3](../pic/SetAliasStatus_06.png)  
+![Image-3](../pic/SetAliasStatus_06.png)
 
 
 #### Usage
 This MakeMxwEvents create maxonrow events, by accepting :
 
-* Custom Event Signature : using RevokedAlias(string,string) 
+* Custom Event Signature : using RevokedAlias(string,string)
 * Signer
-* Event Parameters as below: 
+* Event Parameters as below:
 
 | Name | Type | Description                 |
 | ---- | ---- | --------------------------- |
-| alias | string | Alias value| | 
-| from | string | Account address| | 
-
-
-
+| alias | string | Alias value| |
+| from | string | Account address| |

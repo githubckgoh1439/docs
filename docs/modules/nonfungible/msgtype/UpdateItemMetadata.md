@@ -6,10 +6,10 @@ The message type contains the following parameters:
 
 | Name | Type | Required | Description                 |
 | ---- | ---- | -------- | --------------------------- |
-| symbol | string | true   | Token symbol, which must be unique| | 
-| from | string | true   | Item owner| | 
-| itemID | string | true   | Item ID| | 
-| metadata | string | true   | Metadata of item| | 
+| symbol | string | true   | Token symbol, which must be unique| |
+| from | string | true   | Item owner| |
+| itemID | string | true   | Item ID| |
+| metadata | string | true   | Metadata of item| |
 
 
 #### Example
@@ -27,7 +27,7 @@ The message type contains the following parameters:
 
 ## Handler
 
-The role of the handler is to define what action(s) needs to be taken when this MsgTypeUpdateItemMetadata message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgTypeUpdateItemMetadata` message is received.
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
@@ -35,12 +35,12 @@ In the file (./x/token/nonfungible/handler.go) start with the following code:
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
-Now, you need to define the actual logic for handling the MsgTypeUpdateItemMetadata message in handleMsgUpdateItemMetadata:
+Now, you need to define the actual logic for handling the MsgTypeUpdateItemMetadata message in `handleMsgUpdateItemMetadata`:
 
 ![Image-2](../pic/UpdateItemMetadata_02.png)
 
 
-In this function, requirements need to be met before emitted by the network.  
+In this function, requirements need to be met before emitted by the network.
 
 * A valid Token.
 * Token not in freeze condition.
@@ -54,7 +54,7 @@ In this function, requirements need to be met before emitted by the network.
 ## Events
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](../pic/UpdateItemMetadata_03.png)  
+![Image-1](../pic/UpdateItemMetadata_03.png)
 
 
 #### Usage
@@ -62,12 +62,10 @@ This MakeMxwEvents create maxonrow events, by accepting :
 
 * eventSignature : Custom Event Signature that using UpdatedNonFungibleItemMetadata(string,string,string)
 * from : Item owner
-* eventParam : Event Parameters as below 
+* eventParam : Event Parameters as below
 
 | Name | Type | Description                 |
 | ---- | ---- | --------------------------- |
-| symbol | string | Token symbol, which must be unique| | 
-| itemID | string | Item ID| | 
-| from | string | Item owner| | 
-
-
+| symbol | string | Token symbol, which must be unique| |
+| itemID | string | Item ID| |
+| from | string | Item owner| |

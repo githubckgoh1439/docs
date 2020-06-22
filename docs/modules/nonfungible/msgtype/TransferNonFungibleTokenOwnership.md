@@ -6,9 +6,9 @@ The message type contains the following parameters:
 
 | Name | Type | Required | Description                 |
 | ---- | ---- | -------- | --------------------------- |
-| symbol | string | true   | Token symbol, which must be unique| | 
-| from | string | true   | Token owner| | 
-| to | string | true   | New token owner| | 
+| symbol | string | true   | Token symbol, which must be unique| |
+| from | string | true   | Token owner| |
+| to | string | true   | New token owner| |
 
 
 #### Example
@@ -26,7 +26,7 @@ The message type contains the following parameters:
 
 ## Handler
 
-The role of the handler is to define what action(s) needs to be taken when this MsgTypeTransferNonFungibleTokenOwnership message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgTypeTransferNonFungibleTokenOwnership` message is received.
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
@@ -34,12 +34,12 @@ In the file (./x/token/nonfungible/handler.go) start with the following code:
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
-Now, you need to define the actual logic for handling the MsgTypeTransferNonFungibleTokenOwnership message in handleMsgTransferNonFungibleTokenOwnership:
+Now, you need to define the actual logic for handling the MsgTypeTransferNonFungibleTokenOwnership message in `handleMsgTransferNonFungibleTokenOwnership`:
 
 ![Image-2](../pic/TransferNonFungibleTokenOwnership_02.png)
 
 
-In this function, requirements need to be met before emitted by the network.  
+In this function, requirements need to be met before emitted by the network.
 
 * A valid Token.
 * Token must be approved, and not yet be freeze.
@@ -50,7 +50,7 @@ In this function, requirements need to be met before emitted by the network.
 ## Events
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](../pic/TransferNonFungibleTokenOwnership_03.png)  
+![Image-1](../pic/TransferNonFungibleTokenOwnership_03.png)
 
 
 #### Usage
@@ -58,11 +58,10 @@ This MakeMxwEvents create maxonrow events, by accepting :
 
 * eventSignature : Custom Event Signature that using TransferredNonFungibleTokenOwnership(string,string,string)
 * from : Token owner
-* eventParam : Event Parameters as below 
+* eventParam : Event Parameters as below
 
 | Name | Type | Description                 |
 | ---- | ---- | --------------------------- |
-| symbol | string | Token symbol, which must be unique| | 
-| from | string | Token owner| | 
-| to | string | New token owner| | 
-
+| symbol | string | Token symbol, which must be unique| |
+| from | string | Token owner| |
+| to | string | New token owner| |

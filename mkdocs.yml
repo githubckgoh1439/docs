@@ -7,6 +7,7 @@ nav:
 
     - Modules:
         - 'List of Modules': 'modules/mxw-Modules.md'
+        - 'Non-fungible Token': 'modules/nonfungible/nonfungible.md'
 
     - Interfaces:
         - 'Node CLI': 'mxw-Node-CLI.md'
@@ -14,13 +15,21 @@ nav:
 
     - Toolkits:
         - 'API reference SDK': 'mxw-SDKs.md'
-        - 'Block Explorer for Testnet': 'https:/    /max-scan.usdp.io/'
+        - 'Block Explorer for Testnet': 'https://scan.maxonrow.com/'
         - 'Faucet': 'mxw-faucet.md'
         #- 'Tutorials': 'mxw-Tutorials.md'
 
     - FAQ: 'mxw-FAQ.md'
     - Community channels: 'mxw-Community-Channels.md'
 
-theme: readthedocs
+theme: 
+    name: readthedocs    
+    features:
+        - tabs
+    navigation_depth: 2
+    collapse_navigation: true
+    titles_only: true
+    sticky_navigation: true    
 use_directory_urls: false
 site_favicon: favicon.ico
+

@@ -29,7 +29,7 @@ Each module has its own set of messages that it uses to update its subset of the
 Maxonrow SDK relies on Cosmos SDK wraps and unwraps Msgs from Txs, which means developer only have to define the relevant Msgs.<br/><br/>  
 Msgs must satisfy the following interface:
 
-![Image-1](/en/latest/pic/node_cli_nameservice-01.png)   
+![Image-1](pic/node_cli_nameservice-01.png)   
 
 
 
@@ -57,7 +57,7 @@ Each module's Keeper is responsible for CRUD operations to the main datastore of
 With more sophisticated applications, modules may have access to each other's Keepers 
 for cross-module interactions.<br/>In MVC terms this would be the "model". 
 
-![Image-2](/en/latest/pic/node_cli_nameservice-02.png) 
+![Image-2](pic/node_cli_nameservice-02.png) 
 
 
 ### Querier
@@ -87,7 +87,7 @@ The CLI for this module is broken into two files called sendtx.go and query.go w
 ### sendtx.go
 The sendtx.go (refer module_client.go) file contains SendTxCmd which is a standard method within the Maxonrow SDK. It is referenced later in the module.go file which describes exactly which attributes a modules has. This makes it easier to incorporate different modules for different reasons at the level of the actual application. This function takes parameters from the Cobra CLI tool to create a new msg, sign it and submit it to the application to be processed.
 
-![Image-3](/en/latest/pic/node_cli_nameservice-03.png) 
+![Image-3](pic/node_cli_nameservice-03.png) 
 
 
 ### query.go
@@ -96,6 +96,6 @@ The query.go (refer module_client.go) file contains similar Cobra commands that 
 * GetCmdResolveName
 * GetCmdWhois
 
-![Image-4](/en/latest/pic/node_cli_nameservice-04.png) 
+![Image-4](pic/node_cli_nameservice-04.png) 
 
 

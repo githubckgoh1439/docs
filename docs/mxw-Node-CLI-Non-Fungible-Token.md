@@ -62,7 +62,7 @@ Each module has its own set of messages that it uses to update its subset of the
 Maxonrow SDK relies on Cosmos SDK wraps and unwraps Msgs from Txs, which means developer only have to define the relevant Msgs.<br/><br/> 
 Msgs must satisfy the following interface:
 
-![Image-1](/en/latest/pic/node_cli_nft-01.png)  
+![Image-1](pic/node_cli_nft-01.png)  
 
 
 
@@ -99,7 +99,7 @@ Each module's Keeper is responsible for CRUD operations to the main datastore of
 With more sophisticated applications, modules may have access to each other's Keepers 
 for cross-module interactions. <br/>In MVC terms this would be the "model". 
 
-![Image-2](/en/latest/pic/node_cli_nft-02.png)  
+![Image-2](pic/node_cli_nft-02.png)  
 
 
 

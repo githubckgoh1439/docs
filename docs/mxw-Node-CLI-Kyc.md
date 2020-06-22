@@ -35,7 +35,7 @@ Each module has its own set of messages that it uses to update its subset of the
 Maxonrow SDK relies on Cosmos SDK wraps and unwraps Msgs from Txs, which means developer only have to define the relevant Msgs.<br/><br/>  
 Msgs must satisfy the following interface:
 
-![Image-1](/en/latest/pic/node_cli_kyc-01.png)  
+![Image-1](pic/node_cli_kyc-01.png)  
 
 
 ### Handlers
@@ -63,7 +63,7 @@ Each module's Keeper is responsible for CRUD operations to the main datastore of
 With more sophisticated applications, modules may have access to each other's Keepers 
 for cross-module interactions. <br/>In MVC terms this would be the "model". 
 
-![Image-2](/en/latest/pic/node_cli_kyc-02.png)
+![Image-2](pic/node_cli_kyc-02.png)
 
 
 
@@ -102,13 +102,13 @@ Inside GetTxCmd we create a new module-specific command and call is kyc. Within 
 
 Each function takes parameters from the Cobra CLI tool to create a new msg, sign it and submit it to the application to be processed. 
 
-![Image-3](/en/latest/pic/node_cli_kyc-03.png)
+![Image-3](pic/node_cli_kyc-03.png)
 
 ### query.go
 The query.go  (refer module_client.go) file contains similar Cobra commands that reserve a new name space for referencing our maintenance module. Instead of creating and submitting messages however, the query.go file creates queries and returns the results in human readable form, which handles below function:
 
 * GetCmdIsWhitelisted
 
-![Image-4](/en/latest/pic/node_cli_kyc-04.png)
+![Image-4](pic/node_cli_kyc-04.png)
 
 

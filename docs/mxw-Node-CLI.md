@@ -65,3 +65,4 @@ For detailed usage, you can refer to:
 * [Fee Settings Module](mxw-Node-CLI-Fee-Setting.md "What is Fee Settings Module?") 
 * [Nameservice Module](mxw-Node-CLI-Nameservice.md "What is Nameservice Module?")
 * [Fungible Token Module](mxw-Node-CLI-Fungible-Token.md "What is Fungible Token Module?")
+* [Non-fungible Token Module](mxw-Node-CLI-Non-Fungible-Token.md "What is Non-fungible Token Module?")
