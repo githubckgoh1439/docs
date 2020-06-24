@@ -7,8 +7,9 @@ nav:
 
     - Modules:
         - 'List of Modules': 'modules/mxw-Modules.md'
+        - 'Fungible Token': 'modules/fungible/fungible.md'
         - 'Non-fungible Token': 'modules/nonfungible/nonfungible.md'
-
+        
     - Interfaces:
         - 'Node CLI': 'mxw-Node-CLI.md'
         - 'Node RPC': 'mxw-Node-RPC.md'

@@ -5,6 +5,7 @@ established the first standard called ERC-721. This allowed for an extreme varie
 the standard was as un-opinionated as possible as to exactly how the standard was used. 
 That’s why we’ve been able to see such a wide range of uses that come from different industries, 
 eg. been used in invoices and domain names. That’s why at it’s core a Non-fungible Token only cares about the unique identification number and the token’s place of origin (which makes them essentially inventory lists).
+Use cases that can be applied using Non-fungible Token such as Authorized Certificates, Types of Contracts, Intellectual Properties.
 
 In this section, you will learn how these simple requirements translate to application design.
 
@@ -64,14 +65,90 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
 
+}
+```
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 Now, you need to define the actual logic for handling the `MsgCreateNonFungibleToken` message in `handleMsgCreateNonFungibleToken`:
 
-![Image-2](pic/CreateNonFungibleToken_02.png)
+```
+func (k *Keeper) CreateNonFungibleToken(ctx sdkTypes.Context, name string, symbol string, owner sdkTypes.AccAddress, properties string, metadata string, fee Fee) sdkTypes.Result {
 
+	ownerWalletAccount := k.accountKeeper.GetAccount(ctx, owner)
+	if ownerWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Not authorised to apply for token creation.").Result()
+	}
+
+	if k.TokenExists(ctx, symbol) {
+		return types.ErrTokenExists(symbol).Result()
+	}
+
+	// Overwrite the cosmos sdk tags.
+	// Application fee paid at ante.go, event created here.
+	amt, parseErr := sdkTypes.ParseCoins(fee.Value + types.CIN)
+	if parseErr != nil {
+		return sdkTypes.ErrInvalidCoins("Parse value to coins failed.").Result()
+	}
+	applicationFeeResult := bank.MakeBankSendEvent(ctx, owner, fee.To, amt, *k.accountKeeper)
+
+	zero := sdkTypes.NewUintFromString("0")
+
+	token := &Token{
+		Name:        name,
+		Flags:       NonFungibleTokenMask,
+		Symbol:      symbol,
+		Owner:       owner,
+		Properties:  properties,
+		Metadata:    metadata,
+		TotalSupply: zero,
+	}
+
+	k.storeToken(ctx, symbol, token)
+
+	eventParam := []string{symbol, owner.String(), fee.To.String(), fee.Value}
+	eventSignature := "CreatedNonFungibleToken(string,string,string,bignumber)"
+	event := types.MakeMxwEvents(eventSignature, owner.String(), eventParam)
+
+	accountSequence := ownerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+	return sdkTypes.Result{
+		Events: applicationFeeResult.Events.AppendEvents(event),
+		Log:    resultLog.String(),
+	}
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -84,8 +161,18 @@ In this function, requirements need to be met before emitted by the network.
 
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](pic/CreateNonFungibleToken_03.png)  
+```
+	eventParam := []string{symbol, owner.String(), fee.To.String(), fee.Value}
+	eventSignature := "CreatedNonFungibleToken(string,string,string,bignumber)"
+	event := types.MakeMxwEvents(eventSignature, owner.String(), eventParam)
 
+	accountSequence := ownerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+	return sdkTypes.Result{
+		Events: applicationFeeResult.Events.AppendEvents(event),
+		Log:    resultLog.String(),
+	}
+```
 
 Usage
 
@@ -291,15 +378,110 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
+
+}
+```
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 
 First, you define the actual logic for handling the `MsgSetNonFungibleTokenStatus` - ApproveToken message in `handleMsgSetNonFungibleTokenStatus`:
 
-![Image-2](pic/SetNonFungibleTokenStatus_07.png)
+```
+func (k *Keeper) approveNonFungibleToken(ctx sdkTypes.Context, symbol string, tokenFees []TokenFee, mintLimit, transferLimit sdkTypes.Uint, signer sdkTypes.AccAddress, endorserList []sdkTypes.AccAddress, burnable, transferable, modifiable, public bool) sdkTypes.Result {
+	var token = new(Token)
+	err := k.mustGetTokenData(ctx, symbol, token)
+	if err != nil {
+		return err.Result()
+	}
 
+	ownerWalletAccount := k.accountKeeper.GetAccount(ctx, token.Owner)
+	if ownerWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid token owner.").Result()
+	}
+
+	if token.Flags.HasFlag(ApprovedFlag) {
+		return types.ErrTokenAlreadyApproved(symbol).Result()
+	}
+
+	// Assign fee to token
+	for _, tokenFee := range tokenFees {
+		if !k.feeKeeper.FeeSettingExists(ctx, tokenFee.FeeName) {
+			return types.ErrFeeSettingNotExists(tokenFee.FeeName).Result()
+		}
+		err := k.feeKeeper.AssignFeeToTokenAction(ctx, tokenFee.FeeName, token.Symbol, tokenFee.Action)
+		if err != nil {
+			return err.Result()
+		}
+	}
+
+	token.Flags.AddFlag(ApprovedFlag)
+	if burnable {
+		token.Flags.AddFlag(BurnFlag)
+	}
+	if transferable {
+		token.Flags.AddFlag(TransferableFlag)
+	}
+	if modifiable {
+		token.Flags.AddFlag(ModifiableFlag)
+	}
+	if public {
+		token.Flags.AddFlag(PubFlag)
+	}
+
+	token.TransferLimit = transferLimit
+	token.MintLimit = mintLimit
+	token.EndorserList = endorserList
+
+	k.storeToken(ctx, symbol, token)
+
+	// Event: Approved fungible token
+	eventParam := []string{symbol, token.Owner.String()}
+	eventSignature := "ApprovedNonFungibleToken(string,string)"
+	events := types.MakeMxwEvents(eventSignature, signer.String(), eventParam)
+
+	accountSequence := ownerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: events,
+		Log:    resultLog.String(),
+	}
+
+}
+
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -311,8 +493,49 @@ In this function, requirements need to be met before emitted by the network.
 
 Second, you define the actual logic for handling the MsgSetNonFungibleTokenStatus-RejectToken message in handleMsgSetNonFungibleTokenStatus:
 
-![Image-2](pic/SetNonFungibleTokenStatus_08.png)
+```
+func (k *Keeper) RejectToken(ctx sdkTypes.Context, symbol string, signer sdkTypes.AccAddress) sdkTypes.Result {
 
+	var token = new(Token)
+
+	if !k.IsAuthorised(ctx, signer) {
+		return sdkTypes.ErrUnauthorized("Not authorised to reject").Result()
+	}
+
+	err := k.mustGetTokenData(ctx, symbol, token)
+	if err != nil {
+		return err.Result()
+	}
+
+	var isApproved = token.Flags.HasFlag(ApprovedFlag)
+	ownerWalletAccount := k.accountKeeper.GetAccount(ctx, token.Owner)
+	if ownerWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid token owner.").Result()
+	}
+
+	if isApproved {
+		return types.ErrTokenAlreadyApproved(symbol).Result()
+	}
+
+	store := ctx.KVStore(k.key)
+
+	tokenTypeKey := getTokenKey(symbol)
+	store.Delete(tokenTypeKey)
+
+	eventParam := []string{symbol, token.Owner.String()}
+	eventSignature := "RejectedNonFungibleToken(string,string)"
+
+	accountSequence := ownerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, signer.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+
+}
+
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -324,8 +547,37 @@ In this function, requirements need to be met before emitted by the network.
 
 Thirth, you define the actual logic for handling the MsgSetNonFungibleTokenStatus-FreezeToken message in handleMsgSetNonFungibleTokenStatus:
 
-![Image-2](pic/SetNonFungibleTokenStatus_09.png)
+```
+func (k *Keeper) freezeNonFungibleToken(ctx sdkTypes.Context, symbol string, signer sdkTypes.AccAddress) sdkTypes.Result {
+	var token = new(Token)
+	k.mustGetTokenData(ctx, symbol, token)
 
+	signerAccount := k.accountKeeper.GetAccount(ctx, signer)
+	if signerAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid signer.").Result()
+	}
+
+	if token.Flags.HasFlag(FrozenFlag) {
+		return types.ErrTokenFrozen().Result()
+	}
+
+	token.Flags.AddFlag(FrozenFlag)
+	k.storeToken(ctx, symbol, token)
+
+	eventParam := []string{symbol, token.Owner.String()}
+	eventSignature := "FrozenNonFungibleToken(string,string)"
+
+	accountSequence := signerAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, signer.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+
+}
+
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -337,8 +589,38 @@ In this function, requirements need to be met before emitted by the network.
 
 Next, you define the actual logic for handling the MsgSetNonFungibleTokenStatus-UnfreezeToken message in handleMsgSetNonFungibleTokenStatus:
 
-![Image-2](pic/SetNonFungibleTokenStatus_10.png)
+```
+func (k *Keeper) unfreezeNonFungibleToken(ctx sdkTypes.Context, symbol string, signer sdkTypes.AccAddress) sdkTypes.Result {
 
+	var token = new(Token)
+	k.mustGetTokenData(ctx, symbol, token)
+
+	signerAccount := k.accountKeeper.GetAccount(ctx, signer)
+	if signerAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid signer.").Result()
+	}
+
+	if !token.Flags.HasFlag(FrozenFlag) {
+		return sdkTypes.ErrUnknownRequest("Fungible token is not frozen.").Result()
+	}
+
+	token.Flags.RemoveFlag(FrozenFlag)
+
+	k.storeToken(ctx, symbol, token)
+
+	eventParam := []string{symbol, token.Owner.String()}
+	eventSignature := "UnfreezeNonFungibleToken(string,string)"
+
+	accountSequence := signerAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, signer.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -349,8 +631,44 @@ In this function, requirements need to be met before emitted by the network.
 
 Next, you define the actual logic for handling the MsgSetNonFungibleTokenStatus-ApproveTransferTokenOwnership message in handleMsgSetNonFungibleTokenStatus:
 
-![Image-2](pic/SetNonFungibleTokenStatus_11.png)
+```
+func (k *Keeper) ApproveTransferTokenOwnership(ctx sdkTypes.Context, symbol string, from sdkTypes.AccAddress) sdkTypes.Result {
+	if !k.IsAuthorised(ctx, from) {
+		return sdkTypes.ErrUnauthorized("Not authorised to accept transfer token ownership.").Result()
+	}
 
+	fromWalletAccount := k.accountKeeper.GetAccount(ctx, from)
+	if fromWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid signer.").Result()
+	}
+
+	var token = new(Token)
+	err := k.mustGetTokenData(ctx, symbol, token)
+	if err != nil {
+		return err.Result()
+	}
+
+	if !token.Flags.HasFlag(TransferTokenOwnershipFlag) {
+		return types.ErrInvalidTokenAction().Result()
+	}
+
+	token.Flags.AddFlag(AcceptTokenOwnershipFlag)
+	token.Flags.AddFlag(ApproveTransferTokenOwnershipFlag)
+
+	k.storeToken(ctx, symbol, token)
+
+	eventParam := []string{symbol, token.Owner.String(), token.NewOwner.String()}
+	eventSignature := "ApprovedTransferNonFungibleTokenOwnership(string,string,string)"
+
+	accountSequence := fromWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -361,8 +679,46 @@ In this function, requirements need to be met before emitted by the network.
 
 Last, you define the actual logic for handling the MsgSetNonFungibleTokenStatus-RejectTransferTokenOwnership message in handleMsgSetNonFungibleTokenStatus:
 
-![Image-2](pic/SetNonFungibleTokenStatus_12.png)
+```
+func (k *Keeper) RejectTransferTokenOwnership(ctx sdkTypes.Context, symbol string, from sdkTypes.AccAddress) sdkTypes.Result {
+	if !k.IsAuthorised(ctx, from) {
+		return sdkTypes.ErrUnauthorized("Not authorised to accept transfer token ownership.").Result()
+	}
 
+	fromWalletAccount := k.accountKeeper.GetAccount(ctx, from)
+	if fromWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid signer.").Result()
+	}
+
+	var token = new(Token)
+	err := k.mustGetTokenData(ctx, symbol, token)
+	if err != nil {
+		return err.Result()
+	}
+
+	if !token.Flags.HasFlag(TransferTokenOwnershipFlag) {
+		return types.ErrInvalidTokenAction().Result()
+	}
+
+	token.Flags.RemoveFlag(TransferTokenOwnershipFlag)
+
+	var emptyAccAddr sdkTypes.AccAddress
+	token.NewOwner = emptyAccAddr
+
+	k.storeToken(ctx, symbol, token)
+
+	eventParam := []string{symbol, token.Owner.String(), token.NewOwner.String()}
+	eventSignature := "RejectedTransferNonFungibleTokenOwnership(string,string,string)"
+
+	accountSequence := fromWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -376,8 +732,20 @@ In this function, requirements need to be met before emitted by the network.
 
 1.This tutorial describes how to create maxonrow events for scanner base on approve token after emitted by a network.
 
-![Image-1](pic/SetNonFungibleTokenStatus_01.png)  
+```
+eventParam := []string{symbol, token.Owner.String()}
+eventSignature := "ApprovedNonFungibleToken(string,string)"
+events := types.MakeMxwEvents(eventSignature, signer.String(), eventParam)
 
+accountSequence := ownerWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: events,
+    Log:    resultLog.String(),
+}
+
+```
 
 Usage
 
@@ -395,8 +763,18 @@ This MakeMxwEvents create maxonrow events, by accepting :
 
 2.This tutorial describes how to create maxonrow events for scanner base on reject token after emitted by a network.
 
-![Image-2](pic/SetNonFungibleTokenStatus_02.png)  
+```
+eventParam := []string{symbol, token.Owner.String()}
+eventSignature := "RejectedNonFungibleToken(string,string)"
 
+accountSequence := ownerWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, signer.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 Usage
 
 This MakeMxwEvents create maxonrow events, by accepting :
@@ -413,8 +791,18 @@ This MakeMxwEvents create maxonrow events, by accepting :
 
 3.This tutorial describes how to create maxonrow events for scanner base on freeze token after emitted by a network.
 
-![Image-3](pic/SetNonFungibleTokenStatus_03.png)  
+```
+eventParam := []string{symbol, token.Owner.String()}
+eventSignature := "FrozenNonFungibleToken(string,string)"
 
+accountSequence := signerAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, signer.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -432,7 +820,19 @@ This MakeMxwEvents create maxonrow events, by accepting :
 
 4.This tutorial describes how to create maxonrow events for scanner base on unfreeze token after emitted by a network.
 
-![Image-4](pic/SetNonFungibleTokenStatus_04.png)  
+```
+eventParam := []string{symbol, token.Owner.String()}
+eventSignature := "UnfreezeNonFungibleToken(string,string)"
+
+accountSequence := signerAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, signer.String(), eventParam),
+    Log:    resultLog.String(),
+}
+
+```
 
 
 Usage
@@ -452,8 +852,18 @@ This MakeMxwEvents create maxonrow events, by accepting :
 
 5.This tutorial describes how to create maxonrow events for scanner base on approve transfer token-ownership after emitted by a network.
 
-![Image-5](pic/SetNonFungibleTokenStatus_05.png)  
+```
+eventParam := []string{symbol, token.Owner.String(), token.NewOwner.String()}
+eventSignature := "ApprovedTransferNonFungibleTokenOwnership(string,string,string)"
 
+accountSequence := fromWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -472,8 +882,18 @@ This MakeMxwEvents create maxonrow events, by accepting :
 
 6.This tutorial describes how to create maxonrow events for scanner base on reject transfer token-ownership after emitted by a network.
 
-![Image-6](pic/SetNonFungibleTokenStatus_06.png)  
+```
+eventParam := []string{symbol, token.Owner.String(), token.NewOwner.String()}
+eventSignature := "RejectedTransferNonFungibleTokenOwnership(string,string,string)"
 
+accountSequence := fromWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -524,14 +944,117 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
+
+}
+```
+
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 Now, you need to define the actual logic for handling the `MsgTransferNonFungibleItem` message in `handleMsgTransferNonFungibleItem`:
 
-![Image-2](pic/TransferNonFungibleItem_02.png)
+```
+func (k *Keeper) TransferNonFungibleItem(ctx sdkTypes.Context, symbol string, from, to sdkTypes.AccAddress, itemID string) sdkTypes.Result {
+	if !k.IsItemOwner(ctx, symbol, itemID, from) {
+		return types.ErrInvalidItemOwner().Result()
+	}
 
+	var token = new(Token)
+	if exists := k.GetTokenDataInfo(ctx, symbol, token); !exists {
+		return types.ErrTokenInvalid().Result()
+	}
+
+	if !token.Flags.HasFlag(TransferableFlag) {
+		return types.ErrInvalidTokenAction().Result()
+	}
+
+	fromAccount := k.accountKeeper.GetAccount(ctx, from)
+	if fromAccount == nil {
+		return types.ErrInvalidTokenAccount().Result()
+	}
+
+	if token.Flags.HasFlag(FrozenFlag) {
+		return types.ErrTokenFrozen().Result()
+	}
+
+	itemKey := getNonFungibleItemKey(symbol, []byte(itemID))
+	ownerKey := getNonFungibleItemOwnerKey(symbol, []byte(itemID))
+
+	store := ctx.KVStore(k.key)
+
+	ownerValue := store.Get(ownerKey)
+	if ownerValue == nil {
+		return types.ErrInvalidTokenOwner().Result()
+	}
+
+	itemValue := store.Get(itemKey)
+	if itemValue == nil {
+		return types.ErrInvalidTokenOwner().Result()
+	}
+
+	var item = new(Item)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(itemValue, item)
+	if k.IsItemTransferLimitExceeded(ctx, symbol, itemID) {
+
+		// TO-DO: own error message.
+		return sdkTypes.ErrInternal("Item has existed transfer limit.").Result()
+	}
+
+	// delete old owner
+	store.Delete(ownerKey)
+
+	// set to new owner
+	store.Set(ownerKey, to.Bytes())
+
+	// increase the transfer limit and set
+	item.TransferLimit = item.TransferLimit.Add(sdkTypes.NewUint(1))
+	itemData := k.cdc.MustMarshalBinaryLengthPrefixed(item)
+	store.Set(itemKey, itemData)
+
+	eventParam := []string{symbol, string(itemID), from.String(), to.String()}
+	eventSignature := "TransferredNonFungibleItem(string,string,string,string)"
+
+	accountSequence := fromAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -546,8 +1069,18 @@ In this function, requirements need to be met before emitted by the network.
 
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](pic/TransferNonFungibleItem_03.png)  
+```
+eventParam := []string{symbol, string(itemID), from.String(), to.String()}
+eventSignature := "TransferredNonFungibleItem(string,string,string,string)"
 
+accountSequence := fromAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -606,14 +1139,116 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
+
+}
+```
+
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 Now, you need to define the actual logic for handling the `MsgMintNonFungibleItem` message in `handleMsgMintNonFungibleItem`:
 
-![Image-2](pic/MintNonFungibleItem_02.png)
+```
+func (k *Keeper) MintNonFungibleItem(ctx sdkTypes.Context, symbol string, from sdkTypes.AccAddress, to sdkTypes.AccAddress, itemID, properties, metadata string) sdkTypes.Result {
 
+	nonFungibleToken := new(Token)
+
+	if exists := k.GetTokenDataInfo(ctx, symbol, nonFungibleToken); !exists {
+		return types.ErrInvalidTokenSymbol(symbol).Result()
+	}
+
+	// get minter account.
+	// if token is public that means minter can be anyone.
+	minterAccount := k.accountKeeper.GetAccount(ctx, from)
+	if minterAccount == nil {
+		return types.ErrInvalidTokenAccount().Result()
+	}
+
+	if !nonFungibleToken.Flags.HasFlag(PubFlag) {
+		if !nonFungibleToken.Owner.Equals(from) {
+			return types.ErrInvalidTokenMinter().Result()
+		}
+	} else {
+		if !from.Equals(to) {
+			return sdkTypes.ErrInternal("Public token can only be minted to oneself.").Result()
+		}
+	}
+
+	if !nonFungibleToken.Flags.HasFlag(MintFlag) {
+		return types.ErrInvalidTokenAction().Result()
+	}
+
+	if !nonFungibleToken.Flags.HasFlag(ApprovedFlag) {
+		return types.ErrTokenInvalid().Result()
+	}
+
+	if nonFungibleToken.Flags.HasFlag(FrozenFlag) {
+		return types.ErrTokenFrozen().Result()
+	}
+
+	if !k.IsItemIDUnique(ctx, nonFungibleToken.Symbol, itemID) {
+		return types.ErrTokenItemIDInUsed().Result()
+	}
+
+	amt := sdkTypes.NewUint(1)
+	nonFungibleToken.TotalSupply = nonFungibleToken.TotalSupply.Add(amt)
+
+	// check mint limit, if token mint limit !=0
+	if !nonFungibleToken.MintLimit.IsZero() {
+
+		if k.IsMintLimitExceeded(ctx, nonFungibleToken.Symbol, to) {
+			return sdkTypes.ErrInternal("Holding limit existed.").Result()
+		}
+		k.increaseMintItemLimit(ctx, symbol, to)
+	}
+
+	k.storeToken(ctx, symbol, nonFungibleToken)
+
+	item := k.createNonFungibleItem(ctx, nonFungibleToken.Symbol, to, itemID, properties, metadata)
+
+	eventParam := []string{symbol, string(item.ID), from.String(), to.String()}
+	eventSignature := "MintedNonFungibleItem(string,string,string,string)"
+
+	accountSequence := minterAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -629,8 +1264,18 @@ In this function, requirements need to be met before emitted by the network.
 
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-3](pic/MintNonFungibleItem_03.png)  
+```
+eventParam := []string{symbol, string(item.ID), from.String(), to.String()}
+eventSignature := "MintedNonFungibleItem(string,string,string,string)"
 
+accountSequence := minterAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -684,14 +1329,100 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
+
+}
+```
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 Now, you need to define the actual logic for handling the `MsgBurnNonFungibleItem` message in `handleMsgBurnNonFungibleItem`:
 
-![Image-2](pic/BurnNonFungibleItem_02.png)
+```
+func (k *Keeper) BurnNonFungibleItem(ctx sdkTypes.Context, symbol string, from sdkTypes.AccAddress, itemID string) sdkTypes.Result {
+	var token = new(Token)
+	if exists := k.GetTokenDataInfo(ctx, symbol, token); !exists {
+		return types.ErrInvalidTokenSymbol(symbol).Result()
+	}
 
+	if !token.Flags.HasFlag(BurnFlag) {
+		return types.ErrInvalidTokenAction().Result()
+	}
+
+	fromAccount := k.accountKeeper.GetAccount(ctx, from)
+	if fromAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid account to burn from.").Result()
+	}
+
+	if !token.Flags.HasFlag(ApprovedFlag) {
+		return types.ErrTokenInvalid().Result()
+	}
+
+	if token.Flags.HasFlag(FrozenFlag) {
+		return types.ErrTokenFrozen().Result()
+	}
+
+	item := k.GetNonFungibleItem(ctx, symbol, itemID)
+	if item == nil {
+		return types.ErrTokenItemNotFound().Result()
+	}
+
+	itemOwner := k.GetNonFungibleItemOwnerInfo(ctx, symbol, itemID)
+	if !itemOwner.Equals(from) {
+		return types.ErrInvalidTokenOwner().Result()
+	}
+
+	ownerKey := getNonFungibleItemOwnerKey(symbol, []byte(itemID))
+	itemKey := getNonFungibleItemKey(symbol, []byte(itemID))
+
+	store := ctx.KVStore(k.key)
+
+	store.Delete(itemKey)
+	store.Delete(ownerKey)
+
+	eventParam := []string{symbol, string(item.ID), from.String()}
+	eventSignature := "BurnedNonFungibleItem(string,string,string)"
+
+	accountSequence := fromAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -706,8 +1437,18 @@ In this function, requirements need to be met before emitted by the network.
 
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](pic/BurnNonFungibleItem_03.png)  
+```
+eventParam := []string{symbol, string(item.ID), from.String()}
+eventSignature := "BurnedNonFungibleItem(string,string,string)"
 
+accountSequence := fromAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -759,14 +1500,83 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
 
+}
+```
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 Now, you need to define the actual logic for handling the `MsgTransferNonFungibleTokenOwnership` message in `handleMsgTransferNonFungibleTokenOwnership`:
 
-![Image-2](pic/TransferNonFungibleTokenOwnership_02.png)
+```
+func (k *Keeper) transferNonFungibleTokenOwnership(ctx sdkTypes.Context, from sdkTypes.AccAddress, to sdkTypes.AccAddress, token *Token) sdkTypes.Result {
 
+	ownerWalletAccount := k.accountKeeper.GetAccount(ctx, token.Owner)
+	if ownerWalletAccount == nil {
+		return types.ErrInvalidTokenOwner().Result()
+	}
+
+	if ownerWalletAccount != nil && !token.Owner.Equals(from) {
+		return types.ErrInvalidTokenOwner().Result()
+	}
+
+	if !token.IsApproved() {
+		// TODO: Please define an error code
+		return sdkTypes.ErrUnknownRequest("Token is not approved.").Result()
+	}
+
+	if token.IsFrozen() {
+		return types.ErrTokenFrozen().Result()
+	}
+
+	// set token newowner to new owner, pending for accepting by new owner
+	token.NewOwner = to
+	token.Flags.AddFlag(TransferTokenOwnershipFlag)
+
+	k.storeToken(ctx, token.Symbol, token)
+
+	eventParam := []string{token.Symbol, from.String(), to.String()}
+	eventSignature := "TransferredNonFungibleTokenOwnership(string,string,string)"
+
+	accountSequence := ownerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -780,7 +1590,18 @@ In this function, requirements need to be met before emitted by the network.
 
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](pic/TransferNonFungibleTokenOwnership_03.png)  
+```
+eventParam := []string{token.Symbol, from.String(), to.String()}
+eventSignature := "TransferredNonFungibleTokenOwnership(string,string,string)"
+
+accountSequence := ownerWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -830,14 +1651,100 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
+
+}
+```
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 Now, you need to define the actual logic for handling the `MsgAcceptNonFungibleTokenOwnership` message in `handleMsgAcceptNonFungibleTokenOwnership`:
 
-![Image-2](pic/AcceptNonFungibleTokenOwnership_01.png)
+```
+func (k *Keeper) acceptNonFungibleTokenOwnership(ctx sdkTypes.Context, from sdkTypes.AccAddress, token *Token) sdkTypes.Result {
 
+	if !token.Flags.HasFlag(AcceptTokenOwnershipFlag) && !token.Flags.HasFlag(ApproveTransferTokenOwnershipFlag) && !token.Flags.HasFlag(TransferTokenOwnershipFlag) {
+		return types.ErrInvalidTokenAction().Result()
+	}
+
+	// validation of exisisting owner account
+	ownerWalletAccount := k.accountKeeper.GetAccount(ctx, token.Owner)
+	if ownerWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid token owner.").Result()
+	}
+
+	// validation of new owner account
+	newOwnerWalletAccount := k.accountKeeper.GetAccount(ctx, token.NewOwner)
+	if newOwnerWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid new token owner.").Result()
+	}
+
+	if newOwnerWalletAccount != nil && token.NewOwner.String() != from.String() {
+		return types.ErrInvalidTokenNewOwner().Result()
+	}
+
+	if !token.Flags.HasFlag(ApprovedFlag) {
+		return sdkTypes.ErrUnknownRequest("Token is not approved.").Result()
+	}
+
+	if token.Flags.HasFlag(FrozenFlag) {
+		return types.ErrTokenFrozen().Result()
+	}
+
+	//TO-DO: if there is need to set token.NewOwner to empty
+	// accepting token ownership, remove newowner move the newowner into owner.
+	var emptyAccAddr sdkTypes.AccAddress
+	token.Owner = from
+	token.NewOwner = emptyAccAddr
+
+	token.Flags.RemoveFlag(ApproveTransferTokenOwnershipFlag)
+	token.Flags.RemoveFlag(AcceptTokenOwnershipFlag)
+	token.Flags.RemoveFlag(TransferTokenOwnershipFlag)
+	k.storeToken(ctx, token.Symbol, token)
+
+	eventParam := []string{token.Symbol, from.String()}
+	eventSignature := "AcceptedNonFungibleTokenOwnership(string,string)"
+
+	accountSequence := newOwnerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -852,8 +1759,19 @@ In this function, requirements need to be met before emitted by the network.
 
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](pic/AcceptNonFungibleTokenOwnership_03.png)  
+```
+eventParam := []string{token.Symbol, from.String()}
+eventSignature := "AcceptedNonFungibleTokenOwnership(string,string)"
 
+accountSequence := newOwnerWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+    Log:    resultLog.String(),
+}
+
+```
 
 Usage
 
@@ -950,14 +1868,91 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
+
+}
+```
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 Now, you define the actual logic for handling the `MsgSetNonFungibleItemStatus` - FreezeNonFungibleItem message in `handleMsgSetNonFungibleItemStatus`:
 
-![Image-2](pic/SetNonFungibleItemStatus_03.png)
+```
+func (k *Keeper) FreezeNonFungibleItem(ctx sdkTypes.Context, symbol string, owner, itemOwner sdkTypes.AccAddress, itemID string, metadata string) sdkTypes.Result {
+	var token = new(Token)
+	if exists := k.GetTokenDataInfo(ctx, symbol, token); !exists {
+		return sdkTypes.ErrUnknownRequest("No such non fungible token.").Result()
+	}
 
+	if !k.IsAuthorised(ctx, owner) {
+		return sdkTypes.ErrUnauthorized("Not authorised to freeze non fungible item.").Result()
+	}
+
+	ownerWalletAccount := k.accountKeeper.GetAccount(ctx, owner)
+	if ownerWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid signer.").Result()
+	}
+
+	nonFungibleItem := k.GetNonFungibleItem(ctx, symbol, itemID)
+	if nonFungibleItem == nil {
+		return sdkTypes.ErrUnknownRequest("No such item to freeze.").Result()
+	}
+
+	itemOwner = k.GetNonFungibleItemOwnerInfo(ctx, symbol, itemID)
+	if itemOwner == nil {
+		return sdkTypes.ErrUnknownRequest("Invalid item owner.").Result()
+	}
+
+	if nonFungibleItem.Frozen {
+		return sdkTypes.ErrUnknownRequest("Non Fungible item already frozen.").Result()
+	}
+
+	nonFungibleItem.Frozen = true
+
+	k.storeNonFungibleItem(ctx, symbol, itemOwner, nonFungibleItem)
+
+	eventParam := []string{symbol, itemID, owner.String()}
+	eventSignature := "FrozenNonFungibleItem(string,string,string)"
+
+	accountSequence := ownerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, owner.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -968,8 +1963,53 @@ In this function, requirements need to be met before emitted by the network.
 
 Next, you define the actual logic for handling the MsgSetNonFungibleItemStatus-UnfreezeNonFungibleItem message in handleMsgSetNonFungibleItemStatus:
 
-![Image-2](pic/SetNonFungibleItemStatus_04.png)
+```
+func (k *Keeper) UnfreezeNonFungibleItem(ctx sdkTypes.Context, symbol string, owner sdkTypes.AccAddress, itemID string, metadata string) sdkTypes.Result {
+	if !k.IsAuthorised(ctx, owner) {
+		return sdkTypes.ErrUnauthorized("Not authorised to unfreeze token account.").Result()
+	}
 
+	ownerWalletAccount := k.accountKeeper.GetAccount(ctx, owner)
+	if ownerWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid signer.").Result()
+	}
+
+	var token = new(Token)
+	if exists := k.GetTokenDataInfo(ctx, symbol, token); !exists {
+		return sdkTypes.ErrUnknownRequest("No such non fungible token.").Result()
+	}
+
+	nonFungibleItem := k.GetNonFungibleItem(ctx, symbol, itemID)
+	if nonFungibleItem == nil {
+		return sdkTypes.ErrUnknownRequest("No such  non fungible item to unfreeze.").Result()
+	}
+
+	itemOwner := k.GetNonFungibleItemOwnerInfo(ctx, symbol, itemID)
+	if itemOwner == nil {
+		return sdkTypes.ErrUnknownRequest("Invalid item owner.").Result()
+	}
+
+	if !nonFungibleItem.Frozen {
+		return sdkTypes.ErrUnknownRequest("Non fungible item not frozen.").Result()
+	}
+
+	nonFungibleItem.Frozen = false
+
+	k.storeNonFungibleItem(ctx, symbol, itemOwner, nonFungibleItem)
+
+	eventParam := []string{symbol, itemID, owner.String()}
+	eventSignature := "UnfreezeNonFungibleItem(string,string,string)"
+
+	accountSequence := ownerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, owner.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -983,8 +2023,18 @@ In this function, requirements need to be met before emitted by the network.
 
 1.This tutorial describes how to create maxonrow events for scanner base on freeze-item after emitted by a network.
 
-![Image-1](pic/SetNonFungibleItemStatus_01.png)  
+```
+eventParam := []string{symbol, itemID, owner.String()}
+eventSignature := "FrozenNonFungibleItem(string,string,string)"
 
+accountSequence := ownerWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, owner.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -1003,8 +2053,18 @@ This MakeMxwEvents create maxonrow events, by accepting :
 
 2.This tutorial describes how to create maxonrow events for scanner base on unfreeze-item after emitted by a network.
 
-![Image-2](pic/SetNonFungibleItemStatus_02.png)  
+```
+eventParam := []string{symbol, itemID, owner.String()}
+eventSignature := "UnfreezeNonFungibleItem(string,string,string)"
 
+accountSequence := ownerWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, owner.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -1056,14 +2116,73 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
+
+}
+```
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 Now, you need to define the actual logic for handling the `MsgEndorsement` message in `handleMsgEndorsement`:
 
-![Image-2](pic/Endorsement_02.png)
+```
+func (k *Keeper) MakeEndorsement(ctx sdkTypes.Context, symbol string, from sdkTypes.AccAddress, itemID string) sdkTypes.Result {
 
+	// validation of exisisting owner account
+	ownerWalletAccount := k.accountKeeper.GetAccount(ctx, from)
+	if ownerWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid endorser.").Result()
+	}
+
+	item := k.GetNonFungibleItem(ctx, symbol, itemID)
+	if item == nil {
+		return types.ErrTokenInvalid().Result()
+	}
+
+	eventParam := []string{symbol, string(itemID), from.String()}
+	eventSignature := "EndorsedNonFungibleItem(string,string,string)"
+
+	accountSequence := ownerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+
+}
+
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -1076,8 +2195,18 @@ In this function, requirements need to be met before emitted by the network.
 
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](pic/Endorsement_03.png)  
+```
+eventParam := []string{symbol, string(itemID), from.String()}
+eventSignature := "EndorsedNonFungibleItem(string,string,string)"
 
+accountSequence := ownerWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -1129,14 +2258,95 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
+
+}
+```
+
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 Now, you need to define the actual logic for handling the `MsgUpdateItemMetadata` message in `handleMsgUpdateItemMetadata`:
 
-![Image-2](pic/UpdateItemMetadata_02.png)
+```
+func (k *Keeper) UpdateItemMetadata(ctx sdkTypes.Context, symbol string, from sdkTypes.AccAddress, itemID string, metadata string) sdkTypes.Result {
 
+	// validation of exisisting owner account
+	ownerWalletAccount := k.accountKeeper.GetAccount(ctx, from)
+	if ownerWalletAccount == nil {
+		return sdkTypes.ErrInvalidSequence("Invalid item owner.").Result()
+	}
+
+	var token = new(Token)
+
+	err := k.mustGetTokenData(ctx, symbol, token)
+	if err != nil {
+		return err.Result()
+	}
+
+	if token.Flags.HasFlag(FrozenFlag) {
+		return types.ErrTokenFrozen().Result()
+	}
+
+	if !k.IsItemMetadataModifiable(ctx, symbol, from, itemID) {
+		return types.ErrTokenItemNotModifiable().Result()
+	}
+
+	item := k.GetNonFungibleItem(ctx, symbol, itemID)
+	if item == nil {
+		return types.ErrTokenInvalid().Result()
+	}
+
+	if item.Frozen {
+		return types.ErrTokenItemFronzen().Result()
+	}
+
+	item.Metadata = metadata
+	k.storeNonFungibleItem(ctx, symbol, from, item)
+
+	accountSequence := ownerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	eventParam := []string{symbol, string(itemID), from.String()}
+	eventSignature := "UpdatedNonFungibleItemMetadata(string,string,string)"
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+}
+
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -1153,8 +2363,18 @@ In this function, requirements need to be met before emitted by the network.
 
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](pic/UpdateItemMetadata_03.png)  
+```
+accountSequence := ownerWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
 
+eventParam := []string{symbol, string(itemID), from.String()}
+eventSignature := "UpdatedNonFungibleItemMetadata(string,string,string)"
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+    Log:    resultLog.String(),
+}
+```
 
 Usage
 
@@ -1202,14 +2422,87 @@ The role of the handler is to define what action(s) needs to be taken when this 
 
 In the file (./x/token/nonfungible/handler.go) start with the following code:
 
-![Image-1](pic/MintNonFungibleItem_01.png)
+```
+func NewHandler(keeper *Keeper) sdkTypes.Handler {
+	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
+		switch msg := msg.(type) {
+		case MsgCreateNonFungibleToken:
+			return handleMsgCreateNonFungibleToken(ctx, keeper, msg)
+		case MsgSetNonFungibleTokenStatus:
+			return handleMsgSetNonFungibleTokenStatus(ctx, keeper, msg)
+		case MsgMintNonFungibleItem:
+			return handleMsgMintNonFungibleItem(ctx, keeper, msg)
+		case MsgTransferNonFungibleItem:
+			return handleMsgTransferNonFungibleItem(ctx, keeper, msg)
+		case MsgBurnNonFungibleItem:
+			return handleMsgBurnNonFungibleItem(ctx, keeper, msg)
+		case MsgSetNonFungibleItemStatus:
+			return handleMsgSetNonFungibleItemStatus(ctx, keeper, msg)
+		case MsgTransferNonFungibleTokenOwnership:
+			return handleMsgTransferNonFungibleTokenOwnership(ctx, keeper, msg)
+		case MsgAcceptNonFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		case MsgEndorsement:
+			return handleMsgEndorsement(ctx, keeper, msg)
+		case MsgUpdateItemMetadata:
+			return handleMsgUpdateItemMetadata(ctx, keeper, msg)
+		case MsgUpdateNFTMetadata:
+			return handleMsgUpdateNFTMetadata(ctx, keeper, msg)
+		default:
+			errMsg := fmt.Sprintf("Unrecognized fungible token Msg type: %v", msg.Type())
+			return sdkTypes.ErrUnknownRequest(errMsg).Result()
+		}
+	}
 
+}
+```
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 Now, you need to define the actual logic for handling the `MsgUpdateNFTMetadata` message in `handleMsgUpdateNFTMetadata`:
 
-![Image-2](pic/UpdateNFTMetadata_02.png)
+```
+func (k *Keeper) UpdateNFTMetadata(ctx sdkTypes.Context, symbol string, from sdkTypes.AccAddress, metadata string) sdkTypes.Result {
 
+	// validation of exisisting owner account
+	ownerWalletAccount := k.accountKeeper.GetAccount(ctx, from)
+	if ownerWalletAccount == nil {
+		return types.ErrInvalidTokenOwner().Result()
+	}
+
+	var token = new(Token)
+
+	err := k.mustGetTokenData(ctx, symbol, token)
+	if err != nil {
+		return err.Result()
+	}
+
+	if token.Flags.HasFlag(FrozenFlag) {
+		return types.ErrTokenFrozen().Result()
+	}
+
+	if !token.Owner.Equals(from) {
+		return types.ErrInvalidTokenOwner().Result()
+	}
+
+	if !token.Flags.HasFlag(ApprovedFlag) {
+		return types.ErrTokenInvalid().Result()
+	}
+
+	token.Metadata = metadata
+	k.storeToken(ctx, symbol, token)
+
+	accountSequence := ownerWalletAccount.GetSequence()
+	resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
+
+	eventParam := []string{symbol, from.String()}
+	eventSignature := "UpdatedNonFungibleTokenMetadata(string,string)"
+
+	return sdkTypes.Result{
+		Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+		Log:    resultLog.String(),
+	}
+}
+```
 
 In this function, requirements need to be met before emitted by the network.  
 
@@ -1223,8 +2516,19 @@ In this function, requirements need to be met before emitted by the network.
 
 This tutorial describes how to create maxonrow events for scanner on this after emitted by a network.
 
-![Image-1](pic/UpdateNFTMetadata_03.png)  
+```
+accountSequence := ownerWalletAccount.GetSequence()
+resultLog := types.NewResultLog(accountSequence, ctx.TxBytes())
 
+eventParam := []string{symbol, from.String()}
+eventSignature := "UpdatedNonFungibleTokenMetadata(string,string)"
+
+return sdkTypes.Result{
+    Events: types.MakeMxwEvents(eventSignature, from.String(), eventParam),
+    Log:    resultLog.String(),
+}
+
+```
 
 Usage
 
@@ -1247,8 +2551,23 @@ This is the place to define which queries against application state users will b
  
 Here, you will see NewQuerier been defined, and it acts as a sub-router for queries to this module (similar the NewHandler function). Note that because there isn't an interface similar to Msg for queries, we need to manually define switch statement cases (they can't be pulled off of the query .Route() function):
 
-![Image-1](pic/QuerierNonFungibleItem.png)
+```
+func NewQuerier(cdc *codec.Codec, keeper *Keeper, feeKeeper *fee.Keeper) sdkTypes.Querier {
+	return func(ctx sdkTypes.Context, path []string, req abci.RequestQuery) ([]byte, sdkTypes.Error) {
+		switch path[0] {
+		case QueryListTokenSymbol:
+			return queryListTokenSymbol(cdc, ctx, path[1:], req, keeper)
+		case QueryTokenData:
+			return queryTokenData(cdc, ctx, path[1:], req, keeper)
+		case QueryItemData:
+			return queryItemData(cdc, ctx, path[1:], req, keeper)
+		default:
+			return nil, sdkTypes.ErrUnknownRequest("unknown token query endpoint")
+		}
+	}
+}
 
+```
 
 This module will expose few queries:
 
@@ -1257,8 +2576,19 @@ This query the available tokens list.
 
 After the router is defined, define the inputs and responses for this queryListTokenSymbol:
 
-![Image-2](pic/queryListTokenSymbol.png)
+```
+func queryListTokenSymbol(cdc *codec.Codec, ctx sdkTypes.Context, _ []string, _ abci.RequestQuery, keeper *Keeper) ([]byte, sdkTypes.Error) {
+	fungibleToken, nonfungibleToken := keeper.ListTokenData(ctx)
 
+	resp := &listTokenSymbolResponse{
+		Fungible:    fungibleToken,
+		Nonfungible: nonfungibleToken,
+	}
+	respData := cdc.MustMarshalJSON(resp)
+
+	return respData, nil
+}
+```
 
 Notes on the above code:
 
@@ -1327,8 +2657,24 @@ This query the token data by a given symbol.
 
 After the router is defined, define the inputs and responses for this queryTokenData:
 
-![Image-2](pic/queryTokenData.png)
+```
+func queryTokenData(cdc *codec.Codec, ctx sdkTypes.Context, path []string, _ abci.RequestQuery, keeper *Keeper) ([]byte, sdkTypes.Error) {
+	if len(path) != 1 {
+		return nil, sdkTypes.ErrUnknownRequest(fmt.Sprintf("Invalid path %s", strings.Join(path, "/")))
+	}
 
+	symbol := path[0]
+
+	tokenData, err := keeper.GetTokenData(ctx, symbol)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenInfo := cdc.MustMarshalJSON(tokenData)
+
+	return tokenInfo, nil
+}
+```
 
 Notes on the above code:
 
@@ -1400,8 +2746,23 @@ This query the item data by given of symbol and item ID.
 
 After the router is defined, define the inputs and responses for this queryItemData:
 
-![Image-2](pic/queryItemData.png)
+```
+func queryItemData(cdc *codec.Codec, ctx sdkTypes.Context, path []string, _ abci.RequestQuery, keeper *Keeper) ([]byte, sdkTypes.Error) {
+	if len(path) != 2 {
+		return nil, sdkTypes.ErrUnknownRequest(fmt.Sprintf("Invalid path %s", strings.Join(path, "/")))
+	}
 
+	symbol := path[0]
+	itemID := path[1]
+
+	item := keeper.GetNonFungibleItem(ctx, symbol, itemID)
+
+	tokenInfo := cdc.MustMarshalJSON(item)
+
+	return tokenInfo, nil
+}
+
+```
 
 Notes on the above code:
 
