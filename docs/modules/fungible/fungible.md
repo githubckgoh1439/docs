@@ -59,7 +59,7 @@ Example
 
 `Handler`
 
-The role of the handler is to define what action(s) needs to be taken when this `MsgTypeCreateFungibleToken`
+The role of the handler is to define what action(s) needs to be taken when this `MsgCreateFungibleToken`
  message is received.
 
 In the file (./x/token/fungible/handler.go) start with the following code:
@@ -68,8 +68,8 @@ In the file (./x/token/fungible/handler.go) start with the following code:
 func NewHandler(keeper *Keeper) sdkTypes.Handler {
 	return func(ctx sdkTypes.Context, msg sdkTypes.Msg) sdkTypes.Result {
 		switch msg := msg.(type) {
-		case MsgCreateFungibleToken:
-			return handleMsgCreateFungibleToken(ctx, keeper, msg)
+		'case MsgCreateFungibleToken:
+			return handleMsgCreateFungibleToken(ctx, keeper, msg)'
 		case MsgSetFungibleTokenStatus:
 			return handleMsgSetFungibleTokenStatus(ctx, keeper, msg)
 		case MsgMintFungibleToken:
@@ -93,7 +93,7 @@ func NewHandler(keeper *Keeper) sdkTypes.Handler {
 ```
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
-Now, you need to define the actual logic for handling the MsgTypeCreateFungibleToken message in `handleMsgCreateNonFungibleToken`:
+Now, you need to define the actual logic for handling the MsgTypeCreateFungibleToken message in `handleMsgCreateFungibleToken`:
 
 ```
 func (k *Keeper) CreateFungibleToken(ctx sdkTypes.Context, name string, symbol string, decimals int, owner sdkTypes.AccAddress, fixedSupply bool, maxSupply sdkTypes.Uint, metadata string, fee Fee,
@@ -155,8 +155,10 @@ func (k *Keeper) CreateFungibleToken(ctx sdkTypes.Context, name string, symbol s
 In this function, requirements need to be met before emitted by the network.
 
 * Token must be unique.
-* Token owner must be authorised.
+* Token owner must be KYC authorised.
 * A valid Fee will be charged base on this.
+* Token with FixedSupply equals to TRUE is not allowed to mint-token but allowed to Transfer, Burn, Freeze and Transfer-ownership.
+* Dynamic-supply is where FixedSupply equals to FALSE, is allowed to mint-token until the MaxSupply Limit been reached.
 * Action of Re-create is not allowed.
 
 `Events`
@@ -233,12 +235,12 @@ Token Data Information
 
 | status | Details                 |
 | -------- | --------------------------- |
-| APPROVE  | A valid new token which yet to be approved must be signed by authorised Signer with valid signature will be proceed along with a valid Fee setting scheme that been provided. Token which already been approved is not allowed to do re-submit.| | 
-| REJECT  | A valid new token which yet to be approved must be signed by authorised Signer with valid signature will be proceed. Token which already been rejected is not allowed to do re-submit.| | 
-| FREEZE  | A valid token which already been approved must be signed by authorised Signer with valid signature will be proceed. Token which already been frozen is not allowed to do re-submit.| | 
-| UNFREEZE  | A valid token which already been approved and frozen must be signed by authorised Signer with valid signature will be proceed. Token which already been unfreeze is not allowed to do re-submit.| | 
-| APPROVE_TRANFER_TOKEN_OWNERSHIP  | A valid token which TransferTokenOwnership flag equals to true must be signed by authorised Signer with valid signature will be proceed. Token which already been approved for transfer token-ownership is not allowed to do re-submit.| | 
-| REJECT_TRANFER_TOKEN_OWNERSHIP  | A valid token which TransferTokenOwnership flag equals to true must be signed by authorised Signer with valid signature will be proceed. Token which already been rejected for transfer token-ownership is not allowed to do re-submit.| | 
+| APPROVE  | A valid new token which yet to be approved must be signed by authorised KYC Signer with valid signature will be proceed along with a valid Fee setting scheme that been provided. Token which already been approved is not allowed to do re-submit.| | 
+| REJECT  | A valid new token which yet to be approved must be signed by authorised KYC Signer with valid signature will be proceed. Token which already been rejected is not allowed to do re-submit.| | 
+| FREEZE  | A valid token which already been approved must be signed by authorised KYC Signer with valid signature will be proceed. Token which already been frozen is not allowed to do re-submit.| | 
+| UNFREEZE  | A valid token which already been approved and frozen must be signed by authorised KYC Signer with valid signature will be proceed. Token which already been unfreeze is not allowed to do re-submit.| | 
+| APPROVE_TRANFER_TOKEN_OWNERSHIP  | A valid token which TransferTokenOwnership flag equals to true must be signed by authorised KYC Signer with valid signature will be proceed. Token which already been approved for transfer token-ownership is not allowed to do re-submit.| | 
+| REJECT_TRANFER_TOKEN_OWNERSHIP  | A valid token which TransferTokenOwnership flag equals to true must be signed by authorised KYC Signer with valid signature will be proceed. Token which already been rejected for transfer token-ownership is not allowed to do re-submit.| | 
 
 
 Token Fee Information
@@ -285,7 +287,7 @@ Example
 
 `Handler`
 
-The role of the handler is to define what action(s) needs to be taken when this `MsgTypeSetFungibleTokenStatus` message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgSetFungibleTokenStatus` message is received.
 
 In the file (./x/token/fungible/handler.go) start with the following code:
 
@@ -295,8 +297,8 @@ func NewHandler(keeper *Keeper) sdkTypes.Handler {
 		switch msg := msg.(type) {
 		case MsgCreateFungibleToken:
 			return handleMsgCreateFungibleToken(ctx, keeper, msg)
-		case MsgSetFungibleTokenStatus:
-			return handleMsgSetFungibleTokenStatus(ctx, keeper, msg)
+		'case MsgSetFungibleTokenStatus:
+			return handleMsgSetFungibleTokenStatus(ctx, keeper, msg)'
 		case MsgMintFungibleToken:
 			return handleMsgMintFungibleToken(ctx, keeper, msg)
 		case MsgTransferFungibleToken:
@@ -321,7 +323,7 @@ func NewHandler(keeper *Keeper) sdkTypes.Handler {
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
 
-First, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-ApproveToken message in `handleMsgSetNonFungibleTokenStatus`:
+First, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-ApproveToken message in `handleMsgSetFungibleTokenStatus`:
 
 ```
 func (k *Keeper) approveFungibleToken(ctx sdkTypes.Context, symbol string, tokenFees []TokenFee, burnable bool, metadata string, signer sdkTypes.AccAddress) sdkTypes.Result {
@@ -416,11 +418,11 @@ In this function, requirements need to be met before emitted by the network.
 
 * A valid Token.
 * Token must not be approved.
-* Signer must be authorised.
+* Signer must be KYC authorised.
 * Action of Re-approved is not allowed.
 
 
-Second, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-RejectToken message in `handleMsgSetNonFungibleTokenStatus`:
+Second, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-RejectToken message in `handleMsgSetFungibleTokenStatus`:
 
 ```
 func (k *Keeper) RejectToken(ctx sdkTypes.Context, symbol string, signer sdkTypes.AccAddress) sdkTypes.Result {
@@ -469,11 +471,11 @@ In this function, requirements need to be met before emitted by the network.
 
 * A valid Token.
 * Token must not be approved.
-* Signer must be authorised.
+* Signer must be KYC authorised.
 * Action of Re-reject is not allowed.
 
 
-Thirth, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-FreezeToken message in `handleMsgSetNonFungibleTokenStatus`:
+Thirth, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-FreezeToken message in `handleMsgSetFungibleTokenStatus`:
 
 ```
 func (k *Keeper) freezeFungibleToken(ctx sdkTypes.Context, symbol string, signer sdkTypes.AccAddress, metadata string) sdkTypes.Result {
@@ -511,10 +513,10 @@ In this function, requirements need to be met before emitted by the network.
 
 * A valid Token.
 * Token must not be freeze
-* Signer must be authorised.
+* Signer must be KYC authorised.
 * Action of Re-freeze is not allowed.
 
-Next, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-UnfreezeToken message in `handleMsgSetNonFungibleTokenStatus`:
+Next, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-UnfreezeToken message in `handleMsgSetFungibleTokenStatus`:
 
 ```
 func (k *Keeper) unfreezeFungibleToken(ctx sdkTypes.Context, symbol string, signer sdkTypes.AccAddress, metadata string) sdkTypes.Result {
@@ -554,10 +556,10 @@ In this function, requirements need to be met before emitted by the network.
 
 * A valid Token.
 * Token must be freeze.
-* Signer must be authorised.
+* Signer must be KYC authorised.
 * Action of Re-unfreeze is not allowed.
 
-Next, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-ApproveTransferTokenOwnership message in `handleMsgSetNonFungibleTokenStatus`:
+Next, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-ApproveTransferTokenOwnership message in `handleMsgSetFungibleTokenStatus`:
 
 ```
 func (k *Keeper) ApproveTransferTokenOwnership(ctx sdkTypes.Context, symbol string, from sdkTypes.AccAddress) sdkTypes.Result {
@@ -602,10 +604,10 @@ In this function, requirements need to be met before emitted by the network.
 
 * A valid Token.
 * Token with TransferTokenOwnership flag equals to true.
-* Signer must be authorised.
+* Signer must be KYC authorised.
 * Action of Re-approve transfer token-ownership is not allowed.
 
-Last, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-RejectTransferTokenOwnership message in handleMsgSetNonFungibleTokenStatus:
+Last, you define the actual logic for handling the MsgTypeSetFungibleTokenStatus-RejectTransferTokenOwnership message in handleMsgSetFungibleTokenStatus:
 
 ```
 func (k *Keeper) RejectTransferTokenOwnership(ctx sdkTypes.Context, symbol string, from sdkTypes.AccAddress) sdkTypes.Result {
@@ -652,7 +654,7 @@ In this function, requirements need to be met before emitted by the network.
 
 * A valid Token.
 * Token TransferTokenOwnership flag equals to true.
-* Signer must be authorised.
+* Signer must be KYC authorised.
 * Action of Re-reject transfer token-ownership is not allowed.
 
 
@@ -866,7 +868,7 @@ Example
 
 `Handler`
 
-The role of the handler is to define what action(s) needs to be taken when this `MsgTypeTransferFungibleToken` message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgTransferFungibleToken` message is received.
 
 In the file (./x/token/fungible/handler.go) start with the following code:
 
@@ -880,8 +882,8 @@ func NewHandler(keeper *Keeper) sdkTypes.Handler {
 			return handleMsgSetFungibleTokenStatus(ctx, keeper, msg)
 		case MsgMintFungibleToken:
 			return handleMsgMintFungibleToken(ctx, keeper, msg)
-		case MsgTransferFungibleToken:
-			return handleMsgTransferFungibleToken(ctx, keeper, msg)
+		'case MsgTransferFungibleToken:
+			return handleMsgTransferFungibleToken(ctx, keeper, msg)'
 		case MsgBurnFungibleToken:
 			return handleMsgBurnFungibleToken(ctx, keeper, msg)
 		case MsgSetFungibleTokenAccountStatus:
@@ -971,6 +973,8 @@ In this function, requirements need to be met before emitted by the network.
 * Current token owner's account is not in freeze condition.
 * New token owner's account is not in freeze condition.
 * Current token owner must have enough balance in order to do transfer amount to new token owner
+* Token with FixedSupply equals to TRUE is not allowed to mint-token but allowed to Transfer.
+* Dynamic-supply is where FixedSupply equals to FALSE, is allowed to mint-token until the MaxSupply Limit been reached. Dynamic-supply also allowed for to do Transfer.
 * Action of Re-transfer is allowed if have enough balance.
 
 
@@ -1038,7 +1042,7 @@ Example
 
 `Handler`
 
-The role of the handler is to define what action(s) needs to be taken when this `MsgTypeMintFungibleToken` message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgMintFungibleToken` message is received.
 
 In the file (./x/token/fungible/handler.go) start with the following code:
 
@@ -1050,8 +1054,8 @@ func NewHandler(keeper *Keeper) sdkTypes.Handler {
 			return handleMsgCreateFungibleToken(ctx, keeper, msg)
 		case MsgSetFungibleTokenStatus:
 			return handleMsgSetFungibleTokenStatus(ctx, keeper, msg)
-		case MsgMintFungibleToken:
-			return handleMsgMintFungibleToken(ctx, keeper, msg)
+		'case MsgMintFungibleToken:
+			return handleMsgMintFungibleToken(ctx, keeper, msg)'
 		case MsgTransferFungibleToken:
 			return handleMsgTransferFungibleToken(ctx, keeper, msg)
 		case MsgBurnFungibleToken:
@@ -1159,7 +1163,8 @@ In this function, requirements need to be met before emitted by the network.
 * A valid Token.
 * Token which Mint Flag equals to true and must be approved, and not yet be freeze.
 * Token can only be minted by token-creator.
-* Token with Max-Supply bigger than ZERO is known as Fixed-Supply, which need do validate between Total-Supply and Max-Supply. Else is known as Dynamic-Supply.
+* Token with FixedSupply equals to TRUE is not allowed to mint-token but allowed to Transfer, Burn, Freeze.
+* Dynamic-supply is where FixedSupply equals to FALSE, is allowed to mint-token until the MaxSupply Limit been reached. Dynamic-supply also allowed for to Transfer, Burn, Freeze and Transfer-ownership.
 * Action of Re-mint is allowed if not yet reached the total-supply-limit (as Fixed-Supply).
 
 
@@ -1225,7 +1230,7 @@ Example
 
 `Handler`
 
-The role of the handler is to define what action(s) needs to be taken when this `MsgTypeBurnFungibleToken` message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgBurnFungibleToken` message is received.
 
 In the file (./x/token/fungible/handler.go) start with the following code:
 
@@ -1241,8 +1246,8 @@ func NewHandler(keeper *Keeper) sdkTypes.Handler {
 			return handleMsgMintFungibleToken(ctx, keeper, msg)
 		case MsgTransferFungibleToken:
 			return handleMsgTransferFungibleToken(ctx, keeper, msg)
-		case MsgBurnFungibleToken:
-			return handleMsgBurnFungibleToken(ctx, keeper, msg)
+		'case MsgBurnFungibleToken:
+			return handleMsgBurnFungibleToken(ctx, keeper, msg)'
 		case MsgSetFungibleTokenAccountStatus:
 			return handleMsgSetFungibleTokenAccountStatus(ctx, keeper, msg)
 		case MsgTransferFungibleTokenOwnership:
@@ -1259,7 +1264,7 @@ func NewHandler(keeper *Keeper) sdkTypes.Handler {
 
 
 NewHandler is essentially a sub-router that directs messages coming into this module to the proper handler.
-Now, you need to define the actual logic for handling the MsgTypeBurnFungibleToken message in `handleMsgBurnNonFungibleItem`:
+Now, you need to define the actual logic for handling the MsgTypeBurnFungibleToken message in `handleMsgBurnFungibleItem`:
 
 ```
 func (k *Keeper) BurnFungibleToken(ctx sdkTypes.Context, symbol string, owner sdkTypes.AccAddress, value sdkTypes.Uint) sdkTypes.Result {
@@ -1326,6 +1331,8 @@ In this function, requirements need to be met before emitted by the network.
 * A valid Token account.
 * Token must be approved before this, and not be freeze. Also burnable flag must equals to true.
 * Signer who is the Token owner need to be authorised to do this process.
+* Token with FixedSupply equals to TRUE is not allowed to mint-token but allowed to Burn.
+* Dynamic-supply is where FixedSupply equals to FALSE, is allowed to mint-token until the MaxSupply Limit been reached. Dynamic-supply also allowed for to do Burn.
 * Action of Re-burn is allowed if the balance amount is enough to do burning.
 
 
@@ -1392,7 +1399,7 @@ Example
 
 `Handler`
 
-The role of the handler is to define what action(s) needs to be taken when this `MsgTypeTransferNonFungibleTokenOwnership` message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgTransferFungibleTokenOwnership` message is received.
 
 In the file (./x/token/fungible/handler.go) start with the following code:
 
@@ -1412,8 +1419,8 @@ func NewHandler(keeper *Keeper) sdkTypes.Handler {
 			return handleMsgBurnFungibleToken(ctx, keeper, msg)
 		case MsgSetFungibleTokenAccountStatus:
 			return handleMsgSetFungibleTokenAccountStatus(ctx, keeper, msg)
-		case MsgTransferFungibleTokenOwnership:
-			return handleMsgTransferTokenOwnership(ctx, keeper, msg)
+		'case MsgTransferFungibleTokenOwnership:
+			return handleMsgTransferTokenOwnership(ctx, keeper, msg)'
 		case MsgAcceptFungibleTokenOwnership:
 			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
 		default:
@@ -1484,6 +1491,8 @@ In this function, requirements need to be met before emitted by the network.
 * A valid Token.
 * Token must be approved, and not yet be freeze.
 * Signer must be valid token owner
+* Token with FixedSupply equals to TRUE is not allowed to mint-token but allowed to Transfer-ownership.
+* Dynamic-supply is where FixedSupply equals to FALSE, is allowed to mint-token until the MaxSupply Limit been reached. Dynamic-supply also allowed for to do Transfer-ownership.
 * Action of Re-transfer-ownership is not allowed.
 
 
@@ -1546,7 +1555,7 @@ Example
 
 `Handler`
 
-The role of the handler is to define what action(s) needs to be taken when this `MsgTypeAcceptFungibleTokenOwnership` message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgAcceptFungibleTokenOwnership` message is received.
 
 In the file (./x/token/fungible/handler.go) start with the following code:
 
@@ -1568,8 +1577,8 @@ func NewHandler(keeper *Keeper) sdkTypes.Handler {
 			return handleMsgSetFungibleTokenAccountStatus(ctx, keeper, msg)
 		case MsgTransferFungibleTokenOwnership:
 			return handleMsgTransferTokenOwnership(ctx, keeper, msg)
-		case MsgAcceptFungibleTokenOwnership:
-			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)
+		'case MsgAcceptFungibleTokenOwnership:
+			return handleMsgAcceptTokenOwnership(ctx, keeper, msg)'
 		default:
 			errMsg := fmt.Sprintf("Unrecognized fungible Msg type: %v", msg.Type())
 			return sdkTypes.ErrUnknownRequest(errMsg).Result()
@@ -1655,6 +1664,8 @@ In this function, requirements need to be met before emitted by the network.
 * A valid Token owner.
 * A valid New token owner.
 * Token must be approved and not be freeze.
+* Token with FixedSupply equals to TRUE is not allowed to mint-token but allowed to Transfer-ownership.
+* Dynamic-supply is where FixedSupply equals to FALSE, is allowed to mint-token until the MaxSupply Limit been reached. Dynamic-supply also allowed for to do Transfer-ownership.
 * Action of Re-accept-ownership is not allowed.
 
 
@@ -1726,8 +1737,8 @@ Token Account Information
 
 | status | Details                 |
 | -------- | --------------------------- |
-| FREEZE_ACCOUNT  | A valid token which already been approved must be signed by authorised Signer with valid signature will be proceed. Token which already been frozen is not allowed to do re-submit.| | 
-| UNFREEZE_ACCOUNT  | A valid token which already been approved and frozen must be signed by authorised Signer with valid signature will be proceed. Token which already been unfreeze is not allowed to do re-submit.| | 
+| FREEZE_ACCOUNT  | A valid token which already been approved must be signed by authorised KYC Signer with valid signature will be proceed. Token which already been frozen is not allowed to do re-submit.| | 
+| UNFREEZE_ACCOUNT  | A valid token which already been approved and frozen must be signed by authorised KYC Signer with valid signature will be proceed. Token which already been unfreeze is not allowed to do re-submit.| | 
 
 
 Example
@@ -1765,7 +1776,7 @@ Example
 
 `Handler`
 
-The role of the handler is to define what action(s) needs to be taken when this `MsgTypeSetFungibleTokenAccountStatus` message is received.
+The role of the handler is to define what action(s) needs to be taken when this `MsgSetFungibleTokenAccountStatus` message is received.
 
 In the file (./x/token/fungible/handler.go) start with the following code:
 
@@ -1783,8 +1794,8 @@ func NewHandler(keeper *Keeper) sdkTypes.Handler {
 			return handleMsgTransferFungibleToken(ctx, keeper, msg)
 		case MsgBurnFungibleToken:
 			return handleMsgBurnFungibleToken(ctx, keeper, msg)
-		case MsgSetFungibleTokenAccountStatus:
-			return handleMsgSetFungibleTokenAccountStatus(ctx, keeper, msg)
+		'case MsgSetFungibleTokenAccountStatus:
+			return handleMsgSetFungibleTokenAccountStatus(ctx, keeper, msg)'
 		case MsgTransferFungibleTokenOwnership:
 			return handleMsgTransferTokenOwnership(ctx, keeper, msg)
 		case MsgAcceptFungibleTokenOwnership:
@@ -1849,7 +1860,7 @@ In this function, requirements need to be met before emitted by the network.
 
 * A valid Token.
 * A valid Token account which must not be freeze.
-* Signer must be authorised.
+* Signer must be KYC authorised.
 * Action of Re-freeze-item is not allowed.
 
 
@@ -1903,7 +1914,7 @@ In this function, requirements need to be met before emitted by the network.
 
 * A valid Token.
 * A valid Token account which must be freeze.
-* Signer must be authorised.
+* Signer must be KYC authorised.
 * Action of Re-unfreeze-item is not allowed.
 
 
